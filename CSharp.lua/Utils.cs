@@ -1011,12 +1011,22 @@ namespace CSharpLua {
 
         FillExternalTypeName(sb, externalType, funcOfNamespace, funcOfTypeName);
         string typeName = funcOfTypeName?.Invoke(typeSymbol) ?? externalType.Name;
+        // modified by lch begin
         sb.Append(typeName);
-        int typeParametersCount = externalType.TypeParameters.Length;
-        if (typeParametersCount > 0) {
-          sb.Append('_');
-          sb.Append(typeParametersCount);
-        }
+        //int typeParametersCount = externalType.TypeParameters.Length;
+        //if (typeParametersCount > 0) {
+        //  sb.Append('_');
+        //  sb.Append(typeParametersCount);
+        //}
+
+        // 适配xlua写法
+        //int typeParametersCount = externalType.TypeParameters.Length;
+        //if (typeParametersCount > 0) {
+        //  sb.Append($"['{typeName}<>']");
+        //} else {
+        //  sb.Append(typeName);
+        //}
+        // modified by lch end
         sb.Append('.');
       } else {
         FillNamespaceName(sb, typeSymbol, funcOfNamespace);
@@ -1034,13 +1044,24 @@ namespace CSharpLua {
       if (typeName != null) {
         sb.Append(typeName);
       } else {
+        // modified by lch begin
         typeName = typeSymbol.Name;
         sb.Append(typeName);
-        int typeParametersCount = typeSymbol.TypeParameters.Length;
-        if (typeParametersCount > 0) {
-          sb.Append('_');
-          sb.Append(typeParametersCount);
-        }
+        //int typeParametersCount = typeSymbol.TypeParameters.Length;
+        //if (typeParametersCount > 0) {
+        //  sb.Append('_');
+        //  sb.Append(typeParametersCount);
+        //}
+
+        // 适配xlua写法
+        //int typeParametersCount = typeSymbol.TypeParameters.Length;
+        //if (typeParametersCount > 0) {
+        //  if(sb.Length > 0) sb.Remove(sb.Length - 1, 1);
+        //  sb.Append($"['{typeName}<>']");          
+        //} else {        
+        //  sb.Append(typeName);  
+        //}
+        // modified by lch end
       }
       return sb.ToString();
     }

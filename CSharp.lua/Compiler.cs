@@ -44,6 +44,10 @@ namespace CSharpLua {
     public bool IsNoConcurrent { get; set; }
     public string Include { get; set; }
 
+    // modified by lch begin
+    public string MSSolution { get; set; }
+    // modified by lch end
+
     public Compiler(string input, string output, string lib, string meta, string csc, bool isClassic, string atts, string enums) {
       input_ = input;
       output_ = output;
@@ -120,6 +124,33 @@ namespace CSharpLua {
     }
 
     public void Compile() {
+      // modified by lch begin
+      if (MSSolution != null) {
+        var files = GetSourceFiles(out bool isDirectory);
+        var codes = files.Select(i => (File.ReadAllText(i), i));
+        var libs = GetLibs(libs_, out var luaModuleLibs);
+        var setting = new LuaSyntaxGenerator.SettingInfo {
+          IsClassic = isClassic_,
+          IsExportMetadata = IsExportMetadata,
+          BaseFolder = isDirectory ? input_ : null,
+          Attributes = attributes_,
+          Enums = enums_,
+          LuaModuleLibs = new HashSet<string>(luaModuleLibs),
+          IsModule = IsModule,
+          IsInlineSimpleProperty = IsInlineSimpleProperty,
+          IsPreventDebugObject = IsPreventDebugObject,
+          IsNotConstantForEnum = IsNotConstantForEnum,
+          // modified by lch begin
+          MSSolution = MSSolution,
+          // modified by lch end
+        };
+        var generator = new LuaSyntaxGenerator(MSSolution, true, libs, cscArguments_, Metas, setting);
+
+        generator.Generate(output_);
+        return;
+      }
+      // modified by lch end
+
       if (Include == null) {
         GetGenerator().Generate(output_);
       } else {
@@ -177,6 +208,9 @@ namespace CSharpLua {
         IsInlineSimpleProperty = IsInlineSimpleProperty,
         IsPreventDebugObject = IsPreventDebugObject,
         IsNotConstantForEnum = IsNotConstantForEnum,
+        // modified by lch begin
+        MSSolution = MSSolution,
+        // modified by lch end
       };
       return new LuaSyntaxGenerator(codes, libs, cscArguments_, Metas, setting);
     }

@@ -72,6 +72,10 @@ namespace CSharpLua {
       public bool IsNotConstantForEnum { get; set; }
       public bool IsNoConcurrent { get; set; }
 
+      // modified by lch begin
+      public string MSSolution { get; set; }
+      // modified by lch end
+
       public SettingInfo() {
         Indent = 2;
       }
@@ -170,7 +174,7 @@ namespace CSharpLua {
       var syntaxTrees = BuildSyntaxTrees(codes, parseOptions);
       var references = libs.Select(i => MetadataReference.CreateFromStream(i)).ToList();
       var compilation = CSharpCompilation.Create("_", syntaxTrees, references, WithOptions(commandLineArguments.CompilationOptions));
-      MemoryStream ms = new MemoryStream(); 
+      MemoryStream ms = new MemoryStream();
       EmitResult result = compilation.Emit(ms);
       if (!result.Success) {
         var errors = result.Diagnostics.Where(i => i.Severity == DiagnosticSeverity.Error);
@@ -183,6 +187,41 @@ namespace CSharpLua {
     private static IEnumerable<Stream> ToFileStreams(IEnumerable<string> paths) {
       return paths.Select(i => new FileStream(i, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
     }
+
+    // modified by lch begin
+     public LuaSyntaxGenerator(string msSlnOrProjectPath, bool isSln, IEnumerable<string> libs, IEnumerable<string> cscArguments, IEnumerable<string> metas, SettingInfo setting) {
+      Setting = setting;
+      CommandLineArguments = CSharpCommandLineParser.Default.Parse((cscArguments ?? Array.Empty<string>()).Concat(new[] { "-define:__CSharpLua__" }), null, null);
+      if(isSln) {
+        var parseOptions = CommandLineArguments.ParseOptions.WithLanguageVersion(LanguageVersion.Preview).WithDocumentationMode(DocumentationMode.Parse);
+        var references = ToFileStreams(libs).Select(i => MetadataReference.CreateFromStream(i)).ToList();
+        //compilation_ = CSharpCompilation.Create("_", null, references, WithOptions(CommandLineArguments.CompilationOptions));
+
+        var projectCompilations = MSCompiler.CompileSln(msSlnOrProjectPath);
+        foreach (var projectCompilation in projectCompilations) {
+          if (compilation_ == null) compilation_ = projectCompilation;
+          else compilation_ = compilation_.AddSyntaxTrees(projectCompilation.SyntaxTrees);
+        }
+      } else {
+        compilation_ = MSCompiler.CompileProject(msSlnOrProjectPath);
+      }
+
+
+      XmlMetaProvider = new XmlMetaProvider(ToFileStreams(metas));
+      if (Setting.ExportEnums != null) {
+        exportEnums_.UnionWith(Setting.ExportEnums);
+      }
+      SystemExceptionTypeSymbol = compilation_.GetTypeByMetadataName("System.Exception");
+      if (compilation_.ReferencedAssemblyNames.Any(i => i.Name.Contains("UnityEngine"))) {
+        monoBehaviourTypeSymbol_ = compilation_.GetTypeByMetadataName("UnityEngine.MonoBehaviour");
+        if (monoBehaviourTypeSymbol_ != null) {
+          monoBehaviourSpecialMethodNames_ = new[] { "Awake", "Start", "Update", "FixedUpdate", "LateUpdate" }.ToImmutableHashSet();
+        }
+      }
+      DoPretreatment();
+    }
+
+    // modified by lch end
 
     public LuaSyntaxGenerator(IEnumerable<(string Text, string Path)> codes, IEnumerable<string> libs, IEnumerable<string> cscArguments, IEnumerable<string> metas, SettingInfo setting)
       : this(codes, ToFileStreams(libs), cscArguments, ToFileStreams(metas), setting) {
@@ -204,6 +243,8 @@ namespace CSharpLua {
       }
       DoPretreatment();
     }
+
+
 
     private LuaCompilationUnitSyntax CreateCompilationUnit(SyntaxTree syntaxTree, bool isSingleFile) {
       var semanticModel = GetSemanticModel(syntaxTree);
@@ -248,6 +289,12 @@ namespace CSharpLua {
       using var writer = new StreamWriter(outFile, false, Encoding);
       Write(luaCompilationUnit, writer);
     }
+
+    // modified by lch begin
+    public void GenerateWithMSSln(string outFolder) {
+
+    }
+    // modified by lch end
 
     public void Generate(string outFolder) {
       List<string> modules = new List<string>();
@@ -337,7 +384,7 @@ namespace CSharpLua {
     public string GenerateSingle() {
       foreach (var luaCompilationUnit in Create()) {
         StringBuilder sb = new StringBuilder();
-        var writer = new StringWriter(sb); 
+        var writer = new StringWriter(sb);
         Write(luaCompilationUnit, writer);
         return sb.ToString();
       }
@@ -385,7 +432,7 @@ namespace CSharpLua {
       }
     }
 
-    internal bool IsConstantEnum(ITypeSymbol enumType) { 
+    internal bool IsConstantEnum(ITypeSymbol enumType) {
       if (enumType.TypeKind == TypeKind.Enum) {
         bool isNot = Setting.IsNotConstantForEnum && IsTypeEnableExport(enumType);
         return !isNot;
@@ -1462,7 +1509,10 @@ namespace CSharpLua {
           foreach (var baseInterface in type.AllInterfaces) {
             foreach (var interfaceMember in baseInterface.GetMembers().Where(i => !i.IsStatic)) {
               var implementationMember = type.FindImplementationForInterfaceMember(interfaceMember);
-              Contract.Assert(implementationMember != null);
+              // modified by lch begin
+              //Contract.Assert(implementationMember != null);
+              if (implementationMember == null) continue;
+              // modified by lch end
               if (implementationMember.Kind == SymbolKind.Method) {
                 var methodSymbol = (IMethodSymbol)implementationMember;
                 if (methodSymbol.MethodKind != MethodKind.Ordinary) {
@@ -1608,7 +1658,13 @@ namespace CSharpLua {
       if (node != null) {
         switch (node.Kind()) {
           case SyntaxKind.PropertyDeclaration: {
-            var property = (PropertyDeclarationSyntax)node;
+            PropertyDeclarationSyntax property;
+              try {
+                property = (PropertyDeclarationSyntax)node;
+              } catch (Exception e) {
+                throw e;
+              }
+
             bool hasGet = false;
             bool hasSet = false;
             if (property.AccessorList != null) {
@@ -1868,12 +1924,12 @@ namespace CSharpLua {
     private static bool IsInitFieldExists(INamedTypeSymbol symbol, bool isStatic) {
       var members = symbol.GetMembers().Where(i => i.IsStatic == isStatic).ToArray();
       var fields = members.OfType<IFieldSymbol>();
-      if (IsInitFieldExists(fields, i => i.Type, node => ((VariableDeclaratorSyntax)node).Initializer?.Value)) {
+      if (IsInitFieldExists(fields, i => i.Type, node =>  ((VariableDeclaratorSyntax)node).Initializer?.Value)) {
         return true;
       }
 
       var properties = members.OfType<IPropertySymbol>();
-      if (IsInitFieldExists(properties, i => i.Type, node => ((PropertyDeclarationSyntax)node).Initializer?.Value)) {
+      if (IsInitFieldExists(properties, i => i.Type, node => node.Kind() == SyntaxKind.PropertyDeclaration ? ((PropertyDeclarationSyntax)node).Initializer?.Value:null)) {
         return true;
       }
 
@@ -1902,6 +1958,11 @@ namespace CSharpLua {
     }
 
     internal LuaExpressionSyntax GetTypeName(ISymbol symbol, LuaSyntaxNodeTransform transfor = null) {
+      if(symbol.Name == "Array") {
+        int ii = 0;
+        ++ii;
+      }
+
       switch (symbol.Kind) {
         case SymbolKind.TypeParameter: {
           return symbol.Name;
@@ -2028,9 +2089,15 @@ namespace CSharpLua {
     }
 
     private string GetNamespaceMapName(INamespaceSymbol symbol, string original) {
-      if (symbol.IsFromCode()) {
-        return GetNamespaceNames(symbol.GetAllNamespaces());
-      }
+      // modified by lch begin
+      //if (symbol.IsFromCode()) {
+      //  return GetNamespaceNames(symbol.GetAllNamespaces());
+      //}
+
+      // 都用全路径
+      var name = GetNamespaceNames(symbol.GetAllNamespaces());
+      return "CS." + name;
+      // modified by lch end
 
       return XmlMetaProvider.GetNamespaceMapName(symbol, original);
     }
@@ -2059,8 +2126,8 @@ namespace CSharpLua {
       var typeSymbol = (INamedTypeSymbol)symbol.OriginalDefinition;
       string name = typeSymbol.GetTypeShortName(GetNamespaceMapName, GetTypeRefactorName, transform);
       string newName = XmlMetaProvider.GetTypeMapName(typeSymbol, name);
-      if (newName != null) {
-        name = newName;
+      if (newName != null) {        
+        name = newName;        
       }
       if (transform != null) {
         if (transform.IsNoImportTypeName) {

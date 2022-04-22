@@ -98,7 +98,7 @@ namespace CSharpLua {
           }
         }
 
-        Contract.Assert(!node.ArgumentList!.Arguments.Any());
+        //Contract.Assert(!node.ArgumentList!.Arguments.Any());
         var expression = node.Type.AcceptExpression(this);
         creationExpression = new LuaInvocationExpressionSyntax(expression);
       }
@@ -176,16 +176,23 @@ namespace CSharpLua {
     public override LuaSyntaxNode VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node) {
       var symbol = (IMethodSymbol)semanticModel_.GetSymbolInfo(node).Symbol;
       string codeTemplate = XmlMetaProvider.GetMethodCodeTemplate(symbol);
-      var creationExpression = codeTemplate != null 
+      var creationExpression = codeTemplate != null
         ? BuildCodeTemplateExpression(codeTemplate, node, FillCodeTemplateInvocationArguments(symbol, node.ArgumentList, null), symbol.TypeArguments)
         : GetObjectCreationExpression(symbol, node);
       return GetObjectCreationInitializer(creationExpression, node);
     }
 
     public override LuaSyntaxNode VisitInitializerExpression(InitializerExpressionSyntax node) {
-      Contract.Assert(node.IsKind(SyntaxKind.ArrayInitializerExpression));
-      var arrayType = (IArrayTypeSymbol)semanticModel_.GetTypeInfo(node).ConvertedType;
-      return BuildArrayTypeFromInitializer(arrayType, node);
+      //Contract.Assert(node.IsKind(SyntaxKind.ArrayInitializerExpression));
+      //if(node.IsKind(SyntaxKind.ArrayInitializerExpression)) {
+        var arrayType = (IArrayTypeSymbol)semanticModel_.GetTypeInfo(node).ConvertedType;
+      if (arrayType == null) return LuaExpressionSyntax.EmptyExpression;
+        return BuildArrayTypeFromInitializer(arrayType, node);
+      //} else {
+      //  var expressionNode = (ObjectInitializerExpression)node;
+      //  var symbol = (IMethodSymbol)semanticModel_.GetSymbolInfo(node).Symbol;
+      //  return GetObjectCreationInitializer(symbol, node);
+      //}
     }
 
     public override LuaSyntaxNode VisitBracketedArgumentList(BracketedArgumentListSyntax node) {
@@ -485,17 +492,24 @@ namespace CSharpLua {
         var block = body.Accept<LuaBlockSyntax>(this);
         function.AddStatements(block.Statements);
       } else {
-        var type = (INamedTypeSymbol)semanticModel_.GetTypeInfo(body.Parent).ConvertedType;
+        var typeInfo = semanticModel_.GetTypeInfo(body.Parent);
+        var type = (INamedTypeSymbol)typeInfo.ConvertedType;
         var expression = body.AcceptExpression(this);
-        var delegateInvokeMethod = type.DelegateInvokeMethod;
-        if (delegateInvokeMethod == null) {
-          // is System.Linq.Expressions
-          var delegateType = (INamedTypeSymbol)type.TypeArguments.First();
-          delegateInvokeMethod = delegateType.DelegateInvokeMethod;
-        }
-        if (delegateInvokeMethod!.ReturnsVoid) {
-          if (expression != LuaExpressionSyntax.EmptyExpression) {
-            function.AddStatement(expression);
+   
+        if (type != null) {
+          var delegateInvokeMethod = type.DelegateInvokeMethod;
+          if (delegateInvokeMethod == null) {
+            // is System.Linq.Expressions
+            var delegateType = (INamedTypeSymbol)type.TypeArguments.First();
+            delegateInvokeMethod = delegateType.DelegateInvokeMethod;
+          }
+
+          if (delegateInvokeMethod != null && delegateInvokeMethod!.ReturnsVoid) {
+            if (expression != LuaExpressionSyntax.EmptyExpression) {
+              function.AddStatement(expression);
+            }
+          } else {
+            function.AddStatement(new LuaReturnStatementSyntax(expression));
           }
         } else {
           function.AddStatement(new LuaReturnStatementSyntax(expression));
@@ -972,12 +986,12 @@ namespace CSharpLua {
 
     public override LuaSyntaxNode VisitMemberBindingExpression(MemberBindingExpressionSyntax node) {
       var symbol = semanticModel_.GetSymbolInfo(node).Symbol;
-      Contract.Assert(symbol != null);
-      if (IsDelegateInvoke(symbol, node.Name)) {
+      //Contract.Assert(symbol != null);
+      if ((symbol == null && node.Name.Identifier.ValueText == "Invoke") || (symbol != null && IsDelegateInvoke(symbol, node.Name))) {
         return conditionalTemps_.Peek();
       }
       var nameExpression = node.Name.AcceptExpression(this);
-      bool isObjectColon = symbol.Kind == SymbolKind.Method || (symbol.Kind == SymbolKind.Property && !IsPropertyFieldOrEventField(symbol));
+      bool isObjectColon = symbol == null || symbol.Kind == SymbolKind.Method || (symbol.Kind == SymbolKind.Property && !IsPropertyFieldOrEventField(symbol));
       return conditionalTemps_.Peek().MemberAccess(nameExpression, isObjectColon);
     }
 
@@ -1219,7 +1233,7 @@ namespace CSharpLua {
     public override LuaSyntaxNode VisitOperatorDeclaration(OperatorDeclarationSyntax node) {
       if (IsExportMethodDeclaration(node)) {
         BuildOperatorMethodDeclaration(node);
-      } 
+      }
       return base.VisitOperatorDeclaration(node);
     }
 
@@ -1248,7 +1262,11 @@ namespace CSharpLua {
       var statements = new LuaStatementListSyntax();
       statements.Statements.Add(new LuaShortCommentStatement(" " + node.FixedKeyword));
       var block = new LuaBlockStatementSyntax();
-      var declaration = node.Declaration.Accept<LuaStatementSyntax>(this);
+      if(!(this is LuaStatementSyntax)) {
+        Console.WriteLine("22222222222");
+      }
+      //var declaration = node.Declaration.Accept<LuaStatementSyntax>(this);
+      var declaration = node.Statement.Accept<LuaStatementSyntax>(this);
       block.Statements.Add(declaration);
       WriteStatementOrBlock(node.Statement, block);
       statements.Statements.Add(block);
@@ -1374,7 +1392,7 @@ namespace CSharpLua {
               var expression = BuildIsPatternExpression(targetNode, declarationPattern.Type, name);
               return expression.Not();
             }
-            case SyntaxKind.RecursivePattern: { 
+            case SyntaxKind.RecursivePattern: {
                var recursivePattern = (RecursivePatternSyntax)notPattern.Pattern;
                var governingIdentifier = GetIdentifierNameFromExpression(targetExpression);
                var expression = BuildRecursivePatternExpression(recursivePattern, governingIdentifier, null, targetNode);

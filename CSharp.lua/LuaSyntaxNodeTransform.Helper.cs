@@ -465,7 +465,7 @@ namespace CSharpLua {
     private LuaExpressionSyntax BuildArray(IArrayTypeSymbol symbol, LuaExpressionSyntax arrayType, IList<LuaExpressionSyntax> elements) {
       var invocation = new LuaInvocationExpressionSyntax(arrayType);
       var table = new LuaTableExpression(elements) { IsSingleLine = true };
-      bool isElementNotNull = (symbol.ElementType.IsValueType && !symbol.ElementType.IsNullableType()) 
+      bool isElementNotNull = (symbol.ElementType.IsValueType && !symbol.ElementType.IsNullableType())
         || elements.All(i => i is LuaLiteralExpressionSyntax && i != LuaIdentifierLiteralExpressionSyntax.Nil);
       if (isElementNotNull) {
         invocation.AddArgument(table);
@@ -938,7 +938,7 @@ namespace CSharpLua {
 
     private bool IsImportFunctionUpValuesMax {
       get {
-        const int kMaxCountUpValues = LuaSyntaxNode.kUpvaluesMaxCount - 1;  // System 
+        const int kMaxCountUpValues = LuaSyntaxNode.kUpvaluesMaxCount - 1;  // System
         int usingDeclaresCount = CurCompilationUnit.UsingDeclares.Count(i => i.IsFromCode);
         var genericDeclaresCount = CurCompilationUnit.GenericUsingDeclares.Count(i => i.IsFromCode);
         return usingDeclaresCount + genericDeclaresCount >= kMaxCountUpValues;
@@ -1142,6 +1142,7 @@ namespace CSharpLua {
 
     public override LuaSyntaxNode VisitAttribute(AttributeSyntax node) {
       var symbol = (IMethodSymbol)semanticModel_.GetSymbolInfo(node.Name).Symbol;
+      if (symbol == null) return null;
       INamedTypeSymbol typeSymbol = symbol.ContainingType;
       if (!generator_.IsExportAttribute(typeSymbol)) {
         return null;
@@ -1547,12 +1548,18 @@ namespace CSharpLua {
       private readonly ISymbol symbol_;
       private readonly HashSet<IMethodSymbol> methods_ = new();
 
+      private bool needIgnore(SyntaxNode node) {
+        return !node.SyntaxTree.FilePath.Contains("_Project");
+      }
+
       public SymbolAssignmentSearcher(LuaSyntaxGenerator generator, ISymbol symbol) {
         generator_ = generator;
         symbol_ = symbol;
       }
 
       public override void VisitAssignmentExpression(AssignmentExpressionSyntax node) {
+        //if (needIgnore(node)) return;
+
         var semanticModel = generator_.GetSemanticModel(node.SyntaxTree);
         var symbol = semanticModel.GetSymbolInfo(node.Left).Symbol;
         if (symbol_.EQ(symbol)) {
@@ -1565,6 +1572,8 @@ namespace CSharpLua {
       }
 
       public override void VisitInvocationExpression(InvocationExpressionSyntax node) {
+        //if (needIgnore(node)) return;
+
         var semanticModel = generator_.GetSemanticModel(node.SyntaxTree);
 
         switch (symbol_.Kind) {
@@ -1905,7 +1914,7 @@ namespace CSharpLua {
     }
 
     public int GetConstructorIndex(IMethodSymbol symbol) {
-      Contract.Assert(symbol.MethodKind == MethodKind.Constructor);
+      //Contract.Assert(symbol.MethodKind == MethodKind.Constructor);
       if (generator_.IsFromLuaModule(symbol.ContainingType)) {
         var typeSymbol = (INamedTypeSymbol)symbol.ReceiverType;
         if (typeSymbol.InstanceConstructors.Length > 1) {

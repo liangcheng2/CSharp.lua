@@ -44,6 +44,9 @@ Options
 -inline-property: inline some single-line properties
 -include        : the root directory of the CoreSystem library, adds all the dependencies to a single file named out.lua
 -noconcurrent   : close concurrent compile
+
+lch
+-mssln          : with ms sln
 ";
     public static void Main(string[] args) {
       if (args.Length > 0) {
@@ -86,6 +89,9 @@ Options
             IsNotConstantForEnum = isNotConstantForEnum,
             Include = include,
             IsNoConcurrent = isNoConcurrent,
+            // modified by lch begin
+            MSSolution = cmds.GetArgument("-mssln", true)
+            // modified by lch end
           };
           c.Compile();
           Console.WriteLine($"Compiled Success, cost {sw.Elapsed.TotalSeconds}s");

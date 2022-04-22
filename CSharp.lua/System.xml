@@ -17,7 +17,7 @@ limitations under the License.
 !-->
 <meta>
   <assembly>
-    <namespace name="System">
+    <namespace name="System" Name="CS.System">
       <class name="Single">
         <field name="NaN" Template="System.Single.NaN" />
         <field name="PositiveInfinity" Template="System.Single.PositiveInfinity" />
@@ -28,11 +28,11 @@ limitations under the License.
         <field name="PositiveInfinity" Template="System.Double.PositiveInfinity" />
         <field name="NegativeInfinity" Template="System.Double.NegativeInfinity" />
       </class>
-      <class name="Decimal" Name="System.Double" />
+      <class name="Decimal"/>
       <class name="Char">
         <method name="ToString" Template="System.Char.ToString({0})">
           <arg type="System.Char" />
-        </method>  
+        </method>
         <method name="ToString" Template="System.Char.ToString({this})" />
       </class>
       <class name="String">
@@ -41,12 +41,12 @@ limitations under the License.
           <get Template="#{this}" />
         </property>
         <method name="Concat" GenericArgCount="1" IgnoreGeneric="true" />
-        <method name="Join" GenericArgCount="1" Name="JoinEnumerable" IgnoreGeneric="true" />
-        <method name="Join" Name="JoinEnumerable">
+        <method name="Join" GenericArgCount="1" IgnoreGeneric="true" />
+        <method name="Join" >
           <arg type="System.String" />
           <arg type="System.Collections.Generic.IEnumerable`1" />
         </method>
-        <method name="Join" ArgCount="2" Name="JoinParams" />
+        <method name="Join" ArgCount="2" />
         <method name="LastIndexOf" Template="{this}:LastIndexOf({0}, nil, nil, {1})">
           <arg type="System.String" />
           <arg type="System.StringComparison" />
@@ -133,27 +133,27 @@ limitations under the License.
         </property>
       </class>
       <class name="Object">
-        <method name="Equals" Name="EqualsObj" >
+        <method name="Equals">
           <arg type="System.Object" />
         </method>
-        <method name="Equals" Name="EqualsStatic" >
+        <method name="Equals">
           <arg type="System.Object" />
           <arg type="System.Object" />
         </method>
       </class>
       <class name="Type">
-        <method name="GetType" ArgCount ="1" Name="GetTypeFrom" />
-        <method name="GetType" ArgCount ="2" Name="GetTypeFrom" />
-        <method name="GetType" ArgCount ="3" Name="GetTypeFrom" />
+        <method name="GetType" ArgCount ="1"/>
+        <method name="GetType" ArgCount ="2"/>
+        <method name="GetType" ArgCount ="3"/>
         <method name="op_Equality" Template="{0} == {1}" />
         <method name="op_Inequality" Template="{0} ~= {1}" />
       </class>
-      <class name="Array">
+      <class name="Array" Name="CS.System.Array">
         <property name="Length">
           <get Template="#{this}" />
         </property>
         <method name="BinarySearch" IgnoreGeneric="true" />
-        <method name="Clear" Name="ClearArray" />
+        <method name="Clear"/>
         <method name="Exists" IgnoreGeneric="true" />
         <method name="Fill" IgnoreGeneric="true" />
         <method name="Find" IgnoreGeneric="true" />
@@ -169,17 +169,17 @@ limitations under the License.
         <method name="TrueForAll" IgnoreGeneric="true" />
       </class>
       <class name="IComparable">
-        <method name="CompareTo" Name="CompareToObj" />
+        <method name="CompareTo"/>
       </class>
       <class name="Console">
-        <method name="Write" Name="WriteChar" >
+        <method name="Write" >
           <arg type="System.Char" />
         </method>
-        <method name="WriteLine" Name="WriteLineChar" >
+        <method name="WriteLine">
           <arg type="System.Char" />
         </method>
       </class>
-      <class name="Math" Name="math" >
+      <class name="Math">
         <method name="Round" Template="math.Round({0}, nil, {1})">
           <arg type="System.Double" />
           <arg type="System.MidpointRounding" />
@@ -194,7 +194,7 @@ limitations under the License.
           <arg type="System.Type" />
           <arg type="System.Object[]" />
         </method>
-        <method name="CreateInstance" Name="CreateInstance1">
+        <method name="CreateInstance">
           <arg type="System.Type" />
           <arg type="System.Boolean" />
         </method>
@@ -215,7 +215,7 @@ limitations under the License.
       <class name="Tuple`1" IgnoreGeneric="true">
         <property name="Item1">
           <get Template="{this}[1]" />
-        </property> 
+        </property>
       </class>
       <class name="Tuple`2" IgnoreGeneric="true">
         <property name="Item1">
@@ -345,7 +345,7 @@ limitations under the License.
         <method name="Create" ArgCount="7" Template="System.ValueTuple({0}, {1}, {2}, {3}, {4}, {5}, {6})" />
         <method name="Create" ArgCount="8" Template="System.ValueTuple({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})" />
       </class>
-      <class name="Nullable`1" Name="System.Nullable">
+      <class name="Nullable`1">
         <method name=".ctor" Template="{0}" />
         <property name="HasValue">
           <get Template="({this} ~= nil)" />
@@ -360,7 +360,7 @@ limitations under the License.
         <method name="ToString" Template="System.toString({this})" />
         <method name="op_Explicit" Template="System.Nullable.Value({0})" />
       </class>
-      <class name="MulticastDelegate" Name="System.Delegate" />
+      <class name="MulticastDelegate" Name="CS.System.MulticastDelegate" />
       <class name="Index">
         <property name="End" IsField="true" />
         <property name="Start" IsField="true" />
@@ -377,12 +377,12 @@ limitations under the License.
         <method name="op_Implicit" Template="System.Index({0})" />
       </class>
       <class name="WeakReference`1" IgnoreGeneric="true" />
-      <class name="Lazy`1" Name="System.Lazy" />
+      <class name="Lazy`1" Name="CS.System.Lazy" />
       <class name="Convert">
-        <method name="ToString" Name="ToStringFromChar">
+        <method name="ToString">
           <arg type="System.Char" />
         </method>
-        <method name="ToString" Name="ToStringFromChar">
+        <method name="ToString">
           <arg type="System.Char" />
           <arg type="System.IFormatProvider" />
         </method>
@@ -403,38 +403,38 @@ limitations under the License.
         </method>
       </class>
       <class name="BitConverter">
-        <method name="GetBytes" Name="GetBytesFromBoolean">
+        <method name="GetBytes">
           <arg type="System.Boolean" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromInt16">
+        <method name="GetBytes">
           <arg type="System.Char" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromInt16">
+        <method name="GetBytes">
           <arg type="System.Int16" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromInt16">
+        <method name="GetBytes">
           <arg type="System.UInt16" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromInt32">
+        <method name="GetBytes">
           <arg type="System.Int32" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromInt32">
+        <method name="GetBytes">
           <arg type="System.UInt32" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromInt64">
+        <method name="GetBytes">
           <arg type="System.Int64" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromInt64">
+        <method name="GetBytes">
           <arg type="System.UInt64" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromFloat">
+        <method name="GetBytes">
           <arg type="System.Single" />
         </method>
-        <method name="GetBytes" Name="GetBytesFromDouble">
+        <method name="GetBytes">
           <arg type="System.Double" />
         </method>
       </class>
-      <class name="ArraySegment`1" Name="System.ArraySegment" />
+      <class name="ArraySegment`1" Name="CS.System.ArraySegment" />
       <class name="Guid" Readonly="true" />
       <class name="ArgumentNullException">
         <method name=".ctor" Template="System.ArgumentNullException(nil, {0}, {1})">
@@ -460,8 +460,8 @@ limitations under the License.
         </method>
       </class>
     </namespace>
-    <namespace name="System.Collections" Name="System" >
-      <class name="IEqualityComparer">
+    <namespace name="System.Collections" Name="CS.System.Collections" >
+      <!--<class name="IEqualityComparer">
         <method name="Equals" Name="EqualsObjOf" />
         <method name="GetHashCode" Name="GetHashCodeObjOf" />
       </class>
@@ -475,51 +475,51 @@ limitations under the License.
         <property name="this[]" Name="Obj" />
       </class>
       <class name="Queue" Name="queue" />
-      <class name="Stack" Name="stack" />
+      <class name="Stack" Name="stack" />-->
     </namespace>
-    <namespace name="System.Collections.Generic" Name="System">
-      <class name="List`1" Name="System.List">
+    <namespace name="System.Collections.Generic" Name="CS.System.Collections.Generic">
+      <class name="List`1" Name="CS.System.Collections.Generic.List">
         <property name="Count">
           <get Template="#{this}" />
         </property>
       </class>
-      <class name="Dictionary`2" Name="System.Dictionary"/>
-      <class name="Queue`1" Name="System.Queue">
+      <class name="Dictionary`2" Name="CS.System.Collections.Generic.Dictionary"/>
+      <class name="Queue`1" Name="CS.System.Collections.Generic.Queue">
         <property name="Count">
           <get Template="#{this}" />
         </property>
       </class>
-      <class name="Stack`1" Name="System.Stack">
+      <class name="Stack`1" Name="CS.System.Collections.Generic.Stack">
         <property name="Count">
           <get Template="#{this}" />
         </property>
       </class>
-      <class name="LinkedList`1" Name="System.LinkedList">
+      <class name="LinkedList`1" Name="CS.System.Collections.Generic.LinkedList">
         <property name="Count" IsField="true" />
-        <method name="AddAfter" Name="AddAfterNode">
+        <method name="AddAfter">
           <arg type="System.Collections.Generic.LinkedListNode`1" />
           <arg type="System.Collections.Generic.LinkedListNode`1" />
         </method>
-        <method name="AddBefore" Name="AddBeforeNode">
+        <method name="AddBefore">
           <arg type="System.Collections.Generic.LinkedListNode`1" />
           <arg type="System.Collections.Generic.LinkedListNode`1" />
         </method>
-        <method name="AddFirst" Name="AddFirstNode">
+        <method name="AddFirst">
           <arg type="System.Collections.Generic.LinkedListNode`1" />
         </method>
-        <method name="AddLast" Name="AddLastNode">
+        <method name="AddLast">
           <arg type="System.Collections.Generic.LinkedListNode`1" />
         </method>
-        <method name="Remove" Name="RemoveNode">
+        <method name="Remove">
           <arg type="System.Collections.Generic.LinkedListNode`1" />
         </method>
       </class>
-      <class name="LinkedListNode`1" Name="System.LinkedListNode" IgnoreGeneric="true">
+      <class name="LinkedListNode`1" Name="CS.System.Collections.Generic.LinkedListNode" IgnoreGeneric="true">
         <property name="Value" IsField="true" />
         <property name="List" IsField="true" />
       </class>
-      <class name="HashSet`1" Name="System.HashSet" />
-      <class name="SortedSet`1" Name="System.SortedSet">
+      <class name="HashSet`1" Name="CS.System.Collections.Generic.HashSet" />
+      <class name="SortedSet`1" Name="CS.System.Collections.Generic.SortedSet">
         <method name=".ctor" Template="{class}(false, {0})">
           <arg type="System.Collections.Generic.IComparer`1" />
         </method>
@@ -528,7 +528,7 @@ limitations under the License.
           <get Template="#{this}" />
         </property>
       </class>
-      <class name="SortedList`2" Name="System.SortedList">
+      <class name="SortedList`2" Name="CS.System.Collections.Generic.SortedList">
         <method name=".ctor" Template="{class}(false, {0})">
           <arg type="System.Collections.Generic.IComparer`1" />
         </method>
@@ -536,7 +536,7 @@ limitations under the License.
           <get Template="#{this}" />
         </property>
       </class>
-      <class name="SortedDictionary`2" Name="System.SortedDictionary">
+      <class name="SortedDictionary`2" Name="CS.System.Collections.Generic.SortedDictionary">
         <method name=".ctor" Template="{class}(false, {0})">
           <arg type="System.Collections.Generic.IComparer`1" />
         </method>
@@ -544,7 +544,7 @@ limitations under the License.
           <get Template="#{this}" />
         </property>
       </class>
-      <class name="PriorityQueue`2" Name="System.PriorityQueue">
+      <class name="PriorityQueue`2" Name="CS.System.Collections.Generic.PriorityQueue">
         <method name=".ctor" Template="{class}(0, {0})">
           <arg type="System.Collections.Generic.IComparer`1" />
         </method>
@@ -552,7 +552,7 @@ limitations under the License.
           <get Template="#{this}" />
         </property>
       </class>
-      <class name="KeyValuePair`2" Name="System.KeyValuePair">
+      <class name="KeyValuePair`2" Name="CS.System.Collections.Generic.KeyValuePair">
         <property name="Key">
           <get Template="{this}[1]" />
         </property>
@@ -560,21 +560,21 @@ limitations under the License.
           <get Template="{this}[2]" />
         </property>
       </class>
-      <class name="IDictionary`2">
+      <!--<class name="IDictionary`2">
         <method name="Add" Name="AddKeyValue" />
         <method name="Remove" Name="RemoveKey" />
       </class>
       <class name="IEqualityComparer`1">
         <method name="Equals" Name="EqualsOf" />
         <method name="GetHashCode" Name="GetHashCodeOf" />
-      </class>
-      <class name="EqualityComparer`1" Name="System.EqualityComparer" />
+      </class>-->
+      <!--<class name="EqualityComparer`1" Name="System.EqualityComparer" />-->
     </namespace>
-    <namespace name="System.Collections.ObjectModel" Name="System" >
-      <class name="ReadOnlyCollection`1" Name="System.ReadOnlyCollection" />
+    <namespace name="System.Collections.ObjectModel" Name="CS.System.Collections.ObjectModel" >
+      <class name="ReadOnlyCollection`1" Name="CS.System.Collections.ObjectModel.ReadOnlyCollection" />
     </namespace>
-    <namespace name="System.Linq">
-      <class name="Enumerable">
+    <namespace name="System.Linq" Name="CS.System.Linq">
+      <class name="Enumerable" Name="CS.System.Linq.Enumerable">
         <method name="Where" Template="Linq.Where({0}, {1})" />
         <method name="Select" Template="Linq.Select({0}, {1}, {`1})" />
         <method name="SelectMany" Template="Linq.SelectMany({0}, {1}, {`1})" />
@@ -713,23 +713,23 @@ limitations under the License.
         <method name="DefaultIfEmpty" Template="Linq.DefaultIfEmpty({0})" />
       </class>
     </namespace>
-    <namespace name="System.Diagnostics" Name="System">
+    <namespace name="System.Diagnostics" Name="CS.System.Diagnostics">
       <class name="Debug">
         <method name="Assert" Template="assert({0}, {1})" />
         <method name="Requires" GenericArgCount="0" Template="assert({0}, {1})" />
       </class>
     </namespace>
-    <namespace name="System.Diagnostics.Contracts" Name="System">
+    <namespace name="System.Diagnostics.Contracts" Name="CS.System.Diagnostics.Contracts">
       <class name="Contract">
         <method name="Assert" Template="assert({0}, {1})" />
         <method name="Assume" Template="assert({0}, {1})" />
         <method name="Ensures" Template="assert({0}, {1})" />
       </class>
     </namespace>
-    <namespace name="System.Reflection">
+    <namespace name="System.Reflection" Name="CS.System.Reflection">
       <class name="Assembly">
         <method name="GetExecutingAssembly" Template="System.GetExecutingAssembly(namespace)" />
-        <method name="GetType" Name="GetTypeFrom" />
+        <!--<method name="GetType" Name="GetTypeFrom" />-->
       </class>
       <class name="MemberInfo">
         <method name="op_Inequality" Template="{0} ~= {1}" />
@@ -752,18 +752,18 @@ limitations under the License.
         <method name="op_Equality" Template="{0} == {1}" />
       </class>
     </namespace>
-    <namespace name="System.Text">
-      <class name="StringBuilder" Name="System.StringBuilder">
-        <method name="Append" Name="AppendChar" >
+    <namespace name="System.Text" Name="CS.System.Text">
+      <class name="StringBuilder" Name="CS.System.Text.StringBuilder">
+        <method name="Append">
           <arg type="System.Char" />
-        </method> 
-        <method name="Append" Name="AppendCharRepeat">
+        </method>
+        <method name="Append">
           <arg type="System.Char" />
           <arg type="System.Int32" />
         </method>
       </class>
     </namespace>
-    <namespace name="System.Threading" Name="System">
+    <namespace name="System.Threading" Name="CS.System.Threading">
       <class name="Thread">
         <property name="IsBackground" IsField="true" />
         <property name="Name" IsField="true" />
@@ -780,7 +780,7 @@ limitations under the License.
         <method name="op_Inequality" Template="{0} ~= {1}" />
       </class>
     </namespace>
-    <namespace name="System.Threading.Tasks" Name="System">
+    <namespace name="System.Threading.Tasks" Name="CS.System.Threading.Tasks">
       <class name="Task">
         <method name="WhenAll" GenericArgCount="0" Template="System.Task.WhenAll(nil, {*0})" />
         <method name="WhenAll" GenericArgCount="1" Template="System.Task.WhenAll({`0}, {*0})" />
@@ -789,7 +789,7 @@ limitations under the License.
       <class name="Task`1" IgnoreGeneric="true" />
       <class name="TaskCompletionSource`1" IgnoreGeneric="true" />
     </namespace>
-    <namespace name="System.Numerics">
+    <namespace name="System.Numerics" Name="CS.System.Numerics">
       <class name="Complex" Readonly="true">
         <method name="op_Addition" Template="{0} + {1}" />
         <method name="op_Subtraction" Template="{0} - {1}" />
@@ -798,9 +798,18 @@ limitations under the License.
         <method name="op_UnaryNegation" Template="- {0}" />
         <method name="op_Equality" Template="{0} == {1}" />
         <method name="op_Inequality" Template="{0} ~= {1}" />
-        <method name="op_Implicit" Name="ToComplex" />
+        <method name="op_Implicit" />
       </class>
     </namespace>
-    <namespace name="System.Runtime.CompilerServices" Name="System" />
+    <namespace name="System.Runtime.CompilerServices" Name="CS.System.Runtime.CompilerServices" />
+    <namespace name="System.Globalization" Name="CS.System.Globalization" />
+    <namespace name="System.Text.RegularExpressions" Name="CS.System.Text.RegularExpressions" />
+    <namespace name="System.Net" Name="CS.System.Net" />
+    <namespace name="System.IO" Name="CS.System.IO" />
+    <namespace name="System.Sockets" Name="CS.System.Sockets" />
+    <namespace name="System.Security.Cryptography" Name="CS.System.Security.Cryptography" />
+    <namespace name="System.Xml" Name="CS.System.Xml" />
+    <namespace name="UnityEngine" Name="CS.UnityEngine" />
+    <namespace name="UnityEditor" Name="CS.UnityEditor" />
 </assembly>
 </meta>

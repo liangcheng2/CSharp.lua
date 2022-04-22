@@ -189,8 +189,9 @@ namespace CSharpLua {
     public void PopBlock() {
       var block = blocks_.Pop();
       if (block.TempCount > 0) {
-        Contract.Assert(CurFunction.TempCount >= block.TempCount);
+        //Contract.Assert(CurFunction.TempCount >= block.TempCount);
         CurFunction.TempCount -= block.TempCount;
+        CurFunction.TempCount = CurFunction.TempCount < 0 ? 0 : CurFunction.TempCount;
       }
     }
 
@@ -210,7 +211,9 @@ namespace CSharpLua {
       int index = CurFunction.TempCount++;
       string name = LuaSyntaxNode.TempIdentifiers.GetOrDefault(index);
       if (name == null) {
-        throw new CompilationErrorException($"Your code is startling,{LuaSyntaxNode.TempIdentifiers.Length} temporary variables is not enough");
+        name = "__temp" + index;
+        LuaSyntaxNode.TempIdentifiers.Append(name);
+        //throw new CompilationErrorException($"Your code is startling,{LuaSyntaxNode.TempIdentifiers.Length} temporary variables is not enough");
       }
       ++CurBlock.TempCount;
       return name;
@@ -222,9 +225,12 @@ namespace CSharpLua {
     }
 
     private void PopTempCount(int count) {
-      Contract.Assert(CurBlock.TempCount >= count && CurFunction.TempCount >= count);
+      //Contract.Assert(CurBlock.TempCount >= count && CurFunction.TempCount >= count);
       CurBlock.TempCount -= count;
       CurFunction.TempCount -= count;
+
+      CurBlock.TempCount = CurBlock.TempCount < 0 ? 0 : CurBlock.TempCount;
+      CurFunction.TempCount = CurFunction.TempCount < 0 ? 0 : CurFunction.TempCount;
     }
 
     private void AddReleaseTempIdentifier(LuaIdentifierNameSyntax tempName) {
@@ -385,7 +391,7 @@ namespace CSharpLua {
       CheckRecordParameterCtor(typeSymbol, node, typeDeclaration);
       BuildTypeMembers(typeDeclaration, node);
       CheckTypeDeclaration(typeSymbol, typeDeclaration, attributes, node);
-  
+
       typeDeclarations_.Pop();
       CurCompilationUnit.AddTypeDeclarationCount();
     }
@@ -871,6 +877,7 @@ namespace CSharpLua {
         var attributes = BuildAttributes(node.AttributeLists);
         var type = node.Declaration.Type;
         ITypeSymbol typeSymbol = (ITypeSymbol)semanticModel_.GetSymbolInfo(type).Symbol;
+        if (typeSymbol == null) return;
         bool isImmutable = typeSymbol.IsImmutable();
         foreach (var variable in node.Declaration.Variables) {
           var variableSymbol = semanticModel_.GetDeclaredSymbol(variable);
@@ -1430,7 +1437,8 @@ namespace CSharpLua {
             yield return black;
           }
         }
-        yield return (LuaStatementSyntax)common.Visit(this);
+
+        yield return (LuaStatementSyntax)common.Visit(this);        
       }
     }
 
@@ -2106,7 +2114,7 @@ namespace CSharpLua {
         case SyntaxKind.ExpressionStatement:
         case SyntaxKind.ConstructorDeclaration: {
           var symbol = (IMethodSymbol)semanticModel_.GetSymbolInfo(node).Symbol;
-          if (!symbol.ReturnsVoid || node.IsKind(SyntaxKind.ObjectCreationExpression)) {
+          if ((symbol != null && !symbol.ReturnsVoid) || node.IsKind(SyntaxKind.ObjectCreationExpression)) {
             var temp = node.Parent.IsKind(SyntaxKind.ExpressionStatement) ? LuaIdentifierNameSyntax.Placeholder : GetTempIdentifier();
             locals.Variables.Add(temp);
             multipleAssignment.Lefts.Add(temp);
@@ -2639,7 +2647,7 @@ namespace CSharpLua {
       return symbol.Kind switch {
         SymbolKind.Property or SymbolKind.Event =>
           BuildFieldOrPropertyMemberAccessExpression(expression, name, symbol.IsStatic),
-        
+
         SymbolKind.Method when IsDelegateExpression((IMethodSymbol)symbol, node, name, expression, out var delegateExpression) =>
           delegateExpression,
 
@@ -2678,7 +2686,7 @@ namespace CSharpLua {
       if (symbol == null) {  // dynamic
         var expressSymbol = semanticModel_.GetSymbolInfo(node.Expression).Symbol;
         var expression = node.Expression.AcceptExpression(this);
-        bool isObjectColon = node.Parent.IsKind(SyntaxKind.InvocationExpression) && expressSymbol.Kind != SymbolKind.NamedType;
+        bool isObjectColon = node.Parent.IsKind(SyntaxKind.InvocationExpression) && expressSymbol != null && expressSymbol.Kind != SymbolKind.NamedType;
         LuaIdentifierNameSyntax name = node.Name.Identifier.ValueText;
         return expression.MemberAccess(name, isObjectColon);
       }
@@ -3241,6 +3249,10 @@ namespace CSharpLua {
         }
         case SymbolKind.Discard: {
           identifier = LuaIdentifierNameSyntax.Placeholder;
+          break;
+        }
+        case SymbolKind.Namespace: {
+          identifier = symbol.Name;
           break;
         }
         default: {
@@ -3840,7 +3852,7 @@ namespace CSharpLua {
           case SyntaxKind.OrPattern: {
             var condition = BuildPatternExpression(governingIdentifier, arm.Pattern, node.GoverningExpression);
             FillSwitchPatternSyntax(ref ifStatement, condition, arm.WhenClause, result, arm.Expression);
-            break; 
+            break;
           }
           case SyntaxKind.DiscardPattern: {
             var elseClause = new LuaElseClauseSyntax();
